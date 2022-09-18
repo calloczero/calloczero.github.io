@@ -108,9 +108,9 @@ To run the Shellcode you have todo the same as before, just copy the output, pas
 
 </description>
         <pubDate>Sun, 18 Sep 2022 00:00:00 +0200</pubDate>
-        <link>http://localhost:4000//Test-Post</link>
-        <link href="http://localhost:4000/Test-Post"/>
-        <guid isPermaLink="true">http://localhost:4000/Test-Post</guid>
+        <link>http://localhost:4000//Custom-Shellcode-Encoder</link>
+        <link href="http://localhost:4000/Custom-Shellcode-Encoder"/>
+        <guid isPermaLink="true">http://localhost:4000/Custom-Shellcode-Encoder</guid>
       </item>
     
   </channel>
