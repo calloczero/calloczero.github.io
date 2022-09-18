@@ -101,6 +101,7 @@ For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it whic
 
 ![VirusTotal Screenshot](https://github.com/calloczero/calloczero.github.io/blob/main/_images/crop.png?raw=true)
 
+# Writing an Encryptor to make an obfucate and outplaying Antivirus Software    
 
 
 
