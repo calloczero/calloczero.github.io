@@ -1,2 +1,0 @@
-# calloczero.github.io
-blogpost
